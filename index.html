@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🥭 Scam Battle: มะม่วง vs ส้ม</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(135deg,#fff7df,#dff7ff);color:#263238}
+button{font:inherit}
+#app{max-width:1050px;margin:auto;padding:16px}
+.card{background:#ffffffee;border-radius:24px;box-shadow:0 10px 35px #0001;padding:22px}
+h1,h2,h3{margin-top:0}
+.start{text-align:center;padding:45px 20px}
+.start .emoji{font-size:90px}
+.start h1{font-size:clamp(30px,6vw,52px);margin:8px 0}
+.start p{font-size:18px;color:#607d8b}
+.primary{border:0;border-radius:16px;padding:14px 25px;background:#ff9f1c;color:white;font-weight:800;cursor:pointer;box-shadow:0 6px 0 #db7e00}
+.primary:active{transform:translateY(4px);box-shadow:0 2px 0 #db7e00}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.score{font-weight:900;font-size:20px}.round{color:#607d8b}
+.arena{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px}
+.fighter{text-align:center;position:relative;padding:18px;border-radius:22px;background:#f8fafb;overflow:hidden}
+.fighter .char{font-size:82px;display:block;transition:.18s}
+.fighter .name{font-weight:900;font-size:20px}
+.hpbar{height:16px;background:#dfe6e9;border-radius:99px;overflow:hidden;margin:10px 0}
+.hp{height:100%;width:100%;transition:.35s}
+.player .hp{background:#36b37e}.enemy .hp{background:#ef476f}
+.hptext{font-size:13px;font-weight:800;color:#607d8b}
+.question{padding:22px}
+.question .tag{display:inline-block;background:#eaf7ff;color:#1976d2;padding:6px 10px;border-radius:99px;font-size:13px;font-weight:800}
+.question h2{font-size:clamp(20px,4vw,28px);line-height:1.45}
+.options{display:grid;gap:11px}
+.option{border:2px solid #e3e8ec;background:white;border-radius:15px;padding:15px;text-align:left;cursor:pointer;transition:.15s}
+.option:hover{border-color:#ff9f1c;background:#fff9ed}
+.option:disabled{cursor:default}
+.option.correct{border-color:#2fb344;background:#eafff1}
+.option.wrong{border-color:#ef476f;background:#fff0f3}
+.feedback{margin-top:18px;padding:18px;border-radius:18px;display:none;line-height:1.7}
+.feedback.show{display:block}
+.feedback.good{background:#eafff1;border-left:6px solid #2fb344}
+.feedback.bad{background:#fff0f3;border-left:6px solid #ef476f}
+.feedback strong{display:block;font-size:19px;margin-bottom:7px}
+.next{margin-top:15px;width:100%}
+.flash{animation:flash .45s}
+.shake{animation:shake .45s}
+@keyframes flash{0%,100%{filter:none}30%,60%{filter:brightness(1.9) saturate(1.8);background:#ffccd5}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.damage{position:absolute;left:50%;top:35%;font-size:32px;font-weight:1000;color:#ef476f;animation:float 1s forwards;pointer-events:none}
+@keyframes float{0%{opacity:0;transform:translate(-50%,0) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-70px) scale(1.2)}}
+.hidden{display:none!important}
+.result{text-align:center;padding:35px 15px}.result .big{font-size:90px}
+.tip{text-align:left;background:#fff8df;border-radius:18px;padding:18px;margin:18px 0}
+ul{padding-left:22px}
+@media(max-width:650px){.arena{grid-template-columns:1fr}.fighter .char{font-size:65px}.card{padding:15px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="start" class="card start">
+    <div class="emoji">🥭 ⚔️ 🍊</div>
+    <h1>SCAM BATTLE</h1>
+    <h2>มะม่วง vs น้องส้ม Scammer</h2>
+    <p>เลือกคำตอบให้รอดจากกลโกงในสถานการณ์ที่นักศึกษาเจอได้จริง</p>
+    <p>ตอบถูก <b>+500</b> • ตอบผิด <b>-100</b></p>
+    <button class="primary" onclick="startGame()">เริ่มเกม</button>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="top">
+      <div class="score">⭐ คะแนน: <span id="score">0</span></div>
+      <div class="round">สถานการณ์ <span id="round">1</span>/12</div>
+    </div>
+
+    <div class="arena">
+      <div id="player" class="fighter">
+        <span class="char">🥭</span><div class="name">น้องมะม่วง • ผู้เล่น</div>
+        <div class="hpbar"><div id="playerHp" class="hp"></div></div>
+        <div class="hptext"><span id="playerHpText">100</span>/100 HP</div>
+      </div>
+      <div id="enemy" class="fighter">
+        <span class="char">🍊</span><div class="name">น้องส้ม • SCAMMER</div>
+        <div class="hpbar"><div id="enemyHp" class="hp"></div></div>
+        <div class="hptext"><span id="enemyHpText">100</span>/100 HP</div>
+      </div>
+    </div>
+
+    <div class="card question">
+      <span class="tag" id="tag"></span>
+      <h2 id="question"></h2>
+      <div id="options" class="options"></div>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="primary next hidden" onclick="nextQuestion()">สถานการณ์ถัดไป →</button>
+    </div>
+  </section>
+
+  <section id="result" class="card result hidden">
+    <div class="big" id="resultEmoji">🏆</div>
+    <h1 id="resultTitle"></h1>
+    <h2>คะแนนสุดท้าย: <span id="finalScore"></span></h2>
+    <div class="tip">
+      <h3>🛡️ กฎเอาตัวรอดจากมิจฉาชีพ</h3>
+      <ul>
+        <li>หยุดก่อนโอนเงินหรือให้ข้อมูลสำคัญ</li>
+        <li>ตรวจสอบผ่านช่องทางทางการที่เราเปิดเอง</li>
+        <li>อย่ากดลิงก์หรือกรอก OTP จากข้อความที่ไม่แน่ใจ</li>
+        <li>ข้อเสนอที่ “ถูกเกินจริง” หรือ “ต้องรีบเดี๋ยวนี้” ควรสงสัยไว้ก่อน</li>
+        <li>ถ้าสงสัย ให้ปรึกษาคนที่ไว้ใจก่อนตัดสินใจ</li>
+      </ul>
+    </div>
+    <button class="primary" onclick="startGame()">เล่นอีกครั้ง</button>
+  </section>
+</div>
+
+<script>
+const questions=[
+{tag:"🏠 ค่ามัดจำหอพัก",q:"คุณเจอประกาศหอพักใกล้มหาวิทยาลัย ราคาเช่าถูกกว่าที่อื่นมาก เจ้าของบอกว่า “มีคนพร้อมโอนแล้ว ถ้าไม่โอนค่าจอง 3,000 บาทภายใน 10 นาที จะให้คนอื่น” และส่งเลขบัญชีบุคคลอื่นมา คุณควรทำอย่างไร?",opts:[
+"โอนก่อนเพื่อกันห้อง เพราะราคาดีมาก","ขอเอกสาร/สัญญา ตรวจสอบตัวตนและสถานที่ผ่านช่องทางที่ตรวจสอบได้ก่อนจ่าย","ส่งบัตรประชาชนให้เจ้าของเพื่อยืนยันตัวตน","ต่อรองให้โอนครึ่งหนึ่งก่อน"],ans:1,
+why:"นี่คือการผสม FOMO (กลัวพลาด) กับความเร่งด่วน ทำให้เราตัดขั้นตอนตรวจสอบเพราะกลัวห้องหลุด อีกสัญญาณคือบัญชีรับเงินไม่ตรงกับตัวผู้ให้เช่า",
+do:"อย่าโอนเพราะคำว่า “เหลือห้องเดียว” หรือ “ต้องจ่ายตอนนี้” ตรวจสอบเจ้าของ/ห้องจริง สัญญา และชื่อบัญชีให้สอดคล้องกันก่อนจ่าย"},
+
+{tag:"💼 งาน Freelance แปลเอกสาร",q:"มีคนโพสต์รับนักศึกษาแปลเอกสารอังกฤษ-ไทย ค่าจ้างสูงกว่าตลาด เขาขอให้คุณ “จ่ายค่าประกันงาน 1,500 บาท” ก่อน แล้วอ้างว่าจะคืนพร้อมค่าจ้างหลังส่งงาน คุณควรเลือกข้อใด?",opts:[
+"จ่าย เพราะมีสัญญาว่าจะคืน","รับงานและส่งบัตรประชาชนพร้อมเลขบัญชีไปก่อน","ตรวจสอบบริษัท/ผู้ว่าจ้างและปฏิเสธการจ่ายเงินล่วงหน้าที่ไม่สมเหตุผล","ทำงานให้เสร็จก่อนแล้วค่อยถามเรื่องเงินประกัน"],ans:2,
+why:"มิจฉาชีพใช้เหยื่อล่อเป็นค่าจ้างสูง แล้วสร้างเงื่อนไขให้เหยื่อจ่ายเงินก่อน อาจตามมาด้วยค่าปลดล็อก ค่าภาษี หรือค่าธรรมเนียมอื่นๆ",
+do:"หาข้อมูลผู้ว่าจ้างจากแหล่งอิสระ ใช้แพลตฟอร์มที่มีระบบคุ้มครอง และอย่าจ่ายเงินเพื่อ “ปลดล็อกงาน/รับค่าจ้าง”"},
+
+{tag:"🎓 รับทุนการศึกษา",q:"มีบัญชีโซเชียลอ้างเป็นเจ้าหน้าที่ทุนการศึกษา แจ้งว่าคุณ “ได้รับทุน” แต่ต้องส่ง OTP และให้สแกน QR เพื่อยืนยันสิทธิภายในวันนี้ คุณควรทำอย่างไร?",opts:[
+"ส่ง OTP เพราะเป็นทุนจากมหาวิทยาลัย","สแกน QR ก่อน ถ้าเว็บดูเหมือนมหาวิทยาลัยก็น่าจะปลอดภัย","ติดต่อมหาวิทยาลัยผ่านเว็บไซต์/เบอร์ทางการที่ค้นหาเอง และไม่ให้ OTP","ส่งเฉพาะเลขบัตรประชาชนก็พอ"],ans:2,
+why:"การอ้างสิทธิ์หรือเงินรางวัลทำให้เรารีบและดีใจจนลดความระวัง OTP เป็นข้อมูลสำคัญที่ไม่ควรถูกขอผ่านแชต",
+do:"เปิดเว็บมหาวิทยาลัยด้วยตัวเอง ไม่ใช้ลิงก์จากข้อความ และไม่บอกรหัส OTP/รหัสผ่าน แม้ผู้ติดต่อจะอ้างเป็นเจ้าหน้าที่"},
+
+{tag:"🎫 ตั๋วคอนเสิร์ต",q:"ตั๋วคอนเสิร์ตที่ขายหมดแล้วถูกเสนอในราคาถูกกว่าตลาด 40% ผู้ขายเร่งให้โอนทันทีและไม่ยอมใช้ระบบซื้อขายที่มีตัวกลาง คุณควรทำอย่างไร?",opts:[
+"โอนทันทีเพราะราคาถูกและกลัวหมด","ขอหลักฐานตั๋วแล้วโอนเข้าบัญชีผู้ขาย","ใช้ช่องทางจำหน่าย/โอนบัตรที่ผู้จัดรับรอง หรือระบบตัวกลางที่คุ้มครองผู้ซื้อ","ส่งมัดจำ 10% เพื่อจองก่อน"],ans:2,
+why:"นี่คือการใช้ FOMO และราคาที่ดึงดูดมากเพื่อทำให้เราตัดสินใจเร็ว ยิ่งผู้ขายปฏิเสธตัวกลางยิ่งควรระวัง",
+do:"ซื้อจากช่องทางทางการหรือแพลตฟอร์มที่มี buyer protection หลีกเลี่ยงการโอนตรงเมื่อไม่มีหลักประกัน"},
+
+{tag:"⏰ แก๊งรับกดบัตรคิว",q:"มีเพจรับกดคิวทำพาสปอร์ต/บริการรัฐ โดยอ้างว่า “ถ้าโอนค่ามัดจำวันนี้จะได้คิวพิเศษ” และขอรหัสผ่านบัญชีสำหรับจองคิว คุณควรทำอย่างไร?",opts:[
+"ให้รหัสผ่านเพราะเขาช่วยจองให้","โอนค่ามัดจำก่อน แล้วค่อยเปลี่ยนรหัสผ่าน","จองผ่านช่องทางราชการด้วยตนเอง และไม่ให้รหัสผ่านแก่ผู้อื่น","ให้รหัสผ่านแต่ไม่ให้ OTP"],ans:2,
+why:"มิจฉาชีพใช้ความลำบากในการหาคิวและความเร่งด่วนเป็นแรงกดดัน พร้อมขอข้อมูลล็อกอินซึ่งอาจนำไปยึดบัญชี",
+do:"ใช้เว็บ/แอปทางการที่เราเข้าด้วยตัวเอง และไม่เปิดเผยรหัสผ่านหรือ OTP"},
+
+{tag:"🎣 Phishing มหาวิทยาลัย",q:"คุณได้รับ SMS ว่า “บัญชีนักศึกษาจะถูกระงับคืนนี้ กรุณายืนยันตัวตนที่ลิงก์นี้” หน้าเว็บมีโลโก้มหาวิทยาลัยเหมือนจริงมาก สิ่งที่ควรทำคือ?",opts:[
+"กดลิงก์และกรอกทันทีเพื่อไม่ให้บัญชีถูกล็อก","ตรวจ URL แล้วกรอกถ้าโลโก้ถูกต้อง","ไม่กดลิงก์จาก SMS เปิดเว็บมหาวิทยาลัยด้วยตนเองและตรวจประกาศ/ติดต่อ IT","ส่งภาพหน้าเว็บให้เพื่อนแล้วกรอกตาม"],ans:2,
+why:"นี่คือการขู่ให้กลัวและสร้างเส้นตาย เพื่อให้เหยื่อข้ามขั้นตอนตรวจสอบ โลโก้ปลอมได้ง่าย สิ่งสำคัญคือ URL และช่องทางต้นทาง",
+do:"อย่าคลิกลิงก์จากข้อความน่าสงสัย พิมพ์ที่อยู่เว็บเอง ใช้บุ๊กมาร์ก และตรวจโดเมนก่อนล็อกอิน"},
+
+{tag:"💳 บัญชีม้ากู้เงิน",q:"มีคนเสนอช่วยกู้เงินให้นักศึกษา โดยบอกว่า “เครดิตไม่ผ่านก็ได้” แต่ต้องให้บัญชีธนาคาร/ซิม และรับเงินเข้า-โอนต่อเพื่อแลกค่าตอบแทน คุณควรทำอย่างไร?",opts:[
+"ทำได้ถ้าได้เงินค่าจ้าง","ให้บัญชีแต่ไม่ให้บัตร ATM","ปฏิเสธ เพราะบัญชีอาจถูกใช้เป็นบัญชีม้าและทำให้เจ้าของบัญชีมีปัญหาทางกฎหมาย","ลองทำครั้งเดียวก่อน"],ans:2,
+why:"มิจฉาชีพใช้ความต้องการเงินและคำว่า “ได้เงินง่าย” เป็นเหยื่อล่อ การให้บัญชีรับ-โอนเงินแทนคนอื่นอาจทำให้บัญชีถูกใช้ในเส้นทางเงินผิดกฎหมาย",
+do:"ไม่ให้บัญชี ซิม OTP หรือบัตรแก่ผู้อื่น และถ้าต้องการสินเชื่อให้ติดต่อผู้ให้บริการที่ได้รับอนุญาตโดยตรง"},
+
+{tag:"📦 พัสดุ/ค่าธรรมเนียม",q:"มีข้อความแจ้งว่าพัสดุติดปัญหา ต้องจ่ายค่าธรรมเนียม 19 บาทผ่านลิงก์ และขอเลขบัตรกับ OTP แม้คุณกำลังรอพัสดุอยู่ คุณควรทำอย่างไร?",opts:[
+"จ่าย 19 บาทเพราะจำนวนไม่มาก","กดลิงก์แล้วกรอกเฉพาะเลขบัตร","ตรวจสถานะจากแอป/เว็บไซต์ขนส่งที่เปิดเอง และไม่ให้ OTP","ส่งข้อความกลับไปถามว่าจริงไหม"],ans:2,
+why:"ค่าจำนวนเล็กๆ เป็นเหยื่อล่อราคาถูก ทำให้เราคิดว่าเสียเงินนิดเดียวไม่เป็นไร แต่เป้าหมายอาจเป็นข้อมูลบัตรหรือบัญชี",
+do:"เช็กเลขพัสดุในแอป/เว็บไซต์ทางการ และไม่กรอกข้อมูลการเงินจากลิงก์ที่ส่งมาในข้อความ"},
+
+{tag:"📱 ขายมือถือมือสอง",q:"ผู้ซื้อโทรมาบอกว่าโอนเงินแล้วและส่งสลิปมา แต่เงินยังไม่เข้าบัญชี พร้อมบอกให้คุณส่งเครื่องให้ไรเดอร์ทันที คุณควรทำอย่างไร?",opts:[
+"ส่งเครื่องเพราะมีสลิป","เช็กชื่อในสลิปแล้วส่งได้","รอจนตรวจสอบยอดเงินเข้าจริงในแอปธนาคารของคุณก่อนส่งสินค้า","ขอเลขบัตรประชาชนผู้ซื้อ"],ans:2,
+why:"สลิปปลอมทำได้ง่าย และความเร่งรีบทำให้ผู้ขายไม่ตรวจยอดจริง นี่คือ social engineering ที่ใช้ความมั่นใจและแรงกดดัน",
+do:"เชื่อข้อมูลจากบัญชีของคุณเอง ไม่ใช่ภาพสลิป หากเงินไม่เข้าอย่าส่งสินค้า"},
+
+{tag:"💰 ลงทุน/คริปโต",q:"มีรุ่นพี่ชวนลงทุนแพลตฟอร์มหนึ่ง บอกว่า “การันตีกำไร 15% ใน 7 วัน” และแนะนำให้โอนเงินเข้าบัญชีบุคคลเพื่อรับสิทธิพิเศษ คุณควรทำอย่างไร?",opts:[
+"ลงทุนเล็กน้อยก่อนเพราะเป็นรุ่นพี่","โอนเพื่อรับสิทธิ์ก่อนหมดเวลา","ตรวจสอบใบอนุญาตและข้อมูลผู้ให้บริการจากแหล่งอิสระ และระวังคำว่าการันตีกำไร","ชวนเพื่อนมาลงทุนด้วยเพื่อเพิ่มกำไร"],ans:2,
+why:"ผลตอบแทนสูงแบบการันตีและการเร่งเวลาเป็นสัญญาณอันตราย อีกทั้งการโอนเข้าบัญชีบุคคลทำให้ติดตามและคุ้มครองเงินได้ยาก",
+do:"อย่าเชื่อเพียงคำแนะนำจากคนรู้จัก ตรวจสอบผู้ให้บริการกับหน่วยงานกำกับที่เกี่ยวข้อง และอย่าโอนเพราะกลัวพลาดสิทธิ์"},
+
+{tag:"🎁 แจกของ/ทุนจากแบรนด์",q:"เพจดังประกาศแจกโทรศัพท์ให้ผู้โชคดี แต่ให้กรอกข้อมูลส่วนตัวและจ่าย “ค่าดำเนินการรับรางวัล” 299 บาท คุณควรทำอย่างไร?",opts:[
+"จ่ายเพราะได้มือถือคุ้มกว่า","กรอกข้อมูลก่อนแล้วค่อยจ่าย","ตรวจประกาศจากช่องทางทางการของแบรนด์ และไม่จ่ายค่ารางวัลที่น่าสงสัย","ส่งบัตรประชาชนเพื่อให้จัดส่ง"],ans:2,
+why:"เป็นการใช้รางวัลเป็นเหยื่อล่อและทำให้เหยื่อรู้สึกว่าเสียเงินเล็กน้อยเพื่อได้ของมูลค่าสูง ซึ่งอาจนำไปสู่การเก็บเงินซ้ำหรือขโมยข้อมูล",
+do:"ตรวจสอบกิจกรรมจากช่องทางทางการ อย่าให้ข้อมูลเกินจำเป็น และอย่าจ่ายค่าธรรมเนียมที่ไม่มีหลักฐานตรวจสอบได้"},
+
+{tag:"🧑‍💻 บัญชีมหาวิทยาลัย/แอป",q:"มีคนทักว่าเป็น IT มหาวิทยาลัย บอกว่าต้อง “รีเซ็ตบัญชี” และขอให้คุณติดตั้งแอปรีโมตหน้าจอเพื่อให้เขาช่วยแก้ คุณควรทำอย่างไร?",opts:[
+"ติดตั้งเพราะเขาเป็น IT","ติดตั้งแล้วถอนหลังแก้เสร็จ","ไม่ติดตั้ง ติดต่อ IT ผ่านช่องทางทางการด้วยตนเอง และไม่ให้ควบคุมเครื่องจากระยะไกล","ให้เพื่อนติดตั้งแทน"],ans:2,
+why:"การแอบอ้างเจ้าหน้าที่สร้างความน่าเชื่อถือ แล้วขอสิทธิ์ควบคุมเครื่อง ซึ่งอาจทำให้เห็นรหัส ข้อมูลส่วนตัว หรือทำธุรกรรมแทนเรา",
+do:"หน่วยงานจริงควรตรวจสอบตัวตนได้ ใช้ช่องทาง IT ที่ประกาศอย่างเป็นทางการ และไม่ให้บุคคลแปลกหน้าควบคุมเครื่อง"}
+];
+
+let i=0,score=0,playerHP=100,enemyHP=100,answered=false;
+
+function startGame(){
+  i=0;score=0;playerHP=100;enemyHP=100;answered=false;
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  updateHP();renderQuestion();
+}
+function updateHP(){
+  document.getElementById("playerHp").style.width=Math.max(0,playerHP)+"%";
+  document.getElementById("enemyHp").style.width=Math.max(0,enemyHP)+"%";
+  document.getElementById("playerHpText").textContent=Math.max(0,playerHP);
+  document.getElementById("enemyHpText").textContent=Math.max(0,enemyHP);
+  document.getElementById("score").textContent=score;
+}
+function renderQuestion(){
+  answered=false;
+  const q=questions[i];
+  document.getElementById("round").textContent=i+1;
+  document.getElementById("tag").textContent=q.tag;
+  document.getElementById("question").textContent=q.q;
+  const box=document.getElementById("options");box.innerHTML="";
+  q.opts.forEach((o,n)=>{
+    const b=document.createElement("button");b.className="option";b.textContent=(n+1)+". "+o;
+    b.onclick=()=>answer(n,b);box.appendChild(b);
+  });
+  const f=document.getElementById("feedback");f.className="feedback";f.innerHTML="";
+  document.getElementById("next").classList.add("hidden");
+}
+function playHit(strong=false){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C)return;
+    const c=new C(),o=c.createOscillator(),g=c.createGain();
+    o.type="sawtooth";o.frequency.setValueAtTime(strong?120:180,c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(55,c.currentTime+.16);
+    g.gain.setValueAtTime(.001,c.currentTime);g.gain.exponentialRampToValueAtTime(.35,c.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.2);
+    o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.21);
+  }catch(e){}
+}
+function attack(target,damage,strong){
+  const el=document.getElementById(target);
+  el.classList.remove("flash","shake");void el.offsetWidth;
+  el.classList.add(strong?"shake":"flash");
+  const d=document.createElement("div");d.className="damage";d.textContent="-"+damage+" HP";
+  el.appendChild(d);setTimeout(()=>d.remove(),1000);playHit(strong);
+}
+function answer(n,clicked){
+  if(answered)return; answered=true;
+  const q=questions[i];
+  document.querySelectorAll(".option").forEach((b,k)=>{b.disabled=true;if(k===q.ans)b.classList.add("correct")});
+  const f=document.getElementById("feedback");
+  if(n===q.ans){
+    score+=500;enemyHP=Math.max(0,enemyHP-15);clicked.classList.add("correct");
+    attack("enemy",15,false);
+    f.className="feedback show good";
+    f.innerHTML="<strong>🥭 โจมตีสำเร็จ! +500 คะแนน</strong><b>🧠 Scammer ใช้จิตวิทยา:</b> "+q.why+"<br><br><b>🛡️ รับมือในชีวิตจริง:</b> "+q.do;
+  }else{
+    score-=100;playerHP=Math.max(0,playerHP-15);clicked.classList.add("wrong");
+    attack("player",15,true);
+    f.className="feedback show bad";
+    f.innerHTML="<strong>🍊 น้องส้มโจมตี! -100 คะแนน</strong><b>🧠 จุดที่ต้องระวัง:</b> "+q.why+"<br><br><b>🛡️ วิธีรับมือ:</b> "+q.do+"<br><br><b>เฉลย:</b> "+q.opts[q.ans];
+  }
+  updateHP();
+  document.getElementById("next").classList.remove("hidden");
+}
+function nextQuestion(){
+  if(i<questions.length-1){i++;renderQuestion();}
+  else finish();
+}
+function finish(){
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("finalScore").textContent=score;
+  let title,emo;
+  if(playerHP<=0){title="🍊 น้องส้มชนะ! ต้องระวังกลโกงให้มากขึ้น";emo="😵";}
+  else if(enemyHP<=0 && score>=4500){title="🏆 สุดยอด! นักล่ามิจฉาชีพตัวจริง";emo="🥭";}
+  else if(score>=3000){title="🎉 เก่งมาก! รู้ทันกลโกงส่วนใหญ่แล้ว";emo="🛡️";}
+  else{title="💡 จบเกมแล้ว! ลองทบทวน Feedback แล้วเล่นอีกครั้ง";emo="📚";}
+  document.getElementById("resultTitle").textContent=title;
+  document.getElementById("resultEmoji").textContent=emo;
+}
+</script>
+</body>
+</html>
